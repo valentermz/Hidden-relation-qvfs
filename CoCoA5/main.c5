@@ -1,0 +1,73 @@
+-- This file is free software
+--
+-- Copyright (C) 2017, 2018 Yury G. Kudryashov
+--
+-- This work is licensed under the Creative Commons Attribution-ShareAlike 4.0
+-- International License. To view a copy of this license, visit
+-- http://creativecommons.org/licenses/by-sa/4.0/ or send a letter
+-- to Creative Commons, PO Box 1866, Mountain View, CA 94042, USA.
+
+-- For technical reasons, we need to list all symbols here.
+
+use R ::= QQ[d[1..4], t[1..4], p[1..6], q[1..6], L, x, y, z, w];
+
+define assert(test)
+  If not(test) Then Error("Assertion failed") EndIf;
+enddefine;
+
+define at_infty(P)
+  TopLevel x, y, z, w, R;
+  F := NewFractionField(R);
+  phi := CanonicalHom(R, F);
+  res := subst(phi(P), [[phi(x), 1 / phi(z)], [phi(y), phi(w) / phi(z)]]);
+  res := subst(res * phi(z^2), [[phi(z), 0]]);
+  return num(res) / den(res);
+enddefine;
+
+-- Consider two polynomials P and Q
+
+P := p[1] + p[2] * x + p[3] * y + p[4] * x^2 + p[5] * x * y + p[6] * y^2;
+Q := q[1] + q[2] * x + q[3] * y + q[4] * x^2 + q[5] * x * y + q[6] * y^2;
+
+-- Evaluate given expression at each zero.
+define subst_zeros(ex)
+    TopLevel x, y;
+    zeros := [[0, 0], [1, 0], [0, 1]];
+    return [subst(ex, [[x, z[1]], [y, z[2]]]) | z in zeros];
+enddefine;
+
+-- We consider only vector fields vanising at "zeros"
+
+EQS_ZEROS := ConcatLists(subst_zeros([P, Q]));
+
+-- We also want them to have prescribed traces and determinants at these points
+
+T := subst_zeros(deriv(P, x) + deriv(Q, y));
+D := subst_zeros(deriv(P, x)*deriv(Q, y) - deriv(P, y)*deriv(Q, x));
+
+EQS_TRACES := [T[j] - t[j] | j in 1..3];
+EQS_DETS := [D[j] - d[j] | j in 1..3];
+
+-- These $\tilde P$ and $\tilde Q$ are $\tilde P(0, w)$ and $\tilde Q(0, w)$ from the paper.
+Pt := at_infty(P);
+Qt := at_infty(Q);
+G := w * Pt - Qt;
+
+-- We explicitly cancel p[6]
+L_numer := resultant(Pt, G, w) / p[6];
+L_denom := resultant(deriv(G, w), G, w) / p[6];
+assert(gcd(L_numer, L_denom) = 1);
+EQ_L := L_numer - L * L_denom;
+
+I := ideal(concat(
+    EQS_ZEROS,
+    EQS_TRACES,
+    EQS_DETS,
+    [EQ_L]
+));
+J := elim(p[1]..q[6], I);
+assert(len(gens(J)) = 1);
+
+EQ_H := gens(J)[1];
+H := CoeffListWRT(EQ_H, L);
+indent(H);
