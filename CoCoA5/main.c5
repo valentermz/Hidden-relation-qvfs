@@ -71,3 +71,31 @@ assert(len(gens(J)) = 1);
 EQ_H := gens(J)[1];
 H := CoeffListWRT(EQ_H, L);
 indent(H);
+
+use F;
+EJ1 := num(sum([1/d[k] | k in 1..4]));
+EJ2 := num(sum([t[k] / d[k] | k in 1..4]));
+BB_lhs := sum([t[k]^2 / d[k] | k in 1..4]);
+EJ_subs := [
+    [d[4], -d[1] * d[2] * d[3] / (d[1] * d[2] + d[2] * d[3] + d[1] * d[3])],
+    [t[4], (t[1] * d[2] * d[3] + d[1] * t[2] * d[3] + d[1] * d[2] * t[3]) / (d[1] * d[2] + d[2] * d[3] + d[1] * d[3])]
+];
+assert(subst(_(EJ1), EJ_subs) = 0);
+assert(subst(_(EJ2), EJ_subs) = 0);
+BB3 := subst(BB_lhs, EJ_subs);
+-- Phi := [BB3, _(H[2]) / _(H[3]), _(H[1]) / _(H[3])];
+Phi := [BB3, _(H[1]), _(H[2]), _(H[3])];
+pt := [
+    [t[1], 1],
+    [t[2], 1],
+    [t[3], 2],
+    [d[1], 1],
+    [d[2], 2],
+    [d[3], -1]
+];
+subst(subst(d[4], EJ_subs), pt);
+subst(subst(t[4], EJ_subs), pt);
+JPhi := [[deriv(phi, v) | v in [d[1], d[2], d[3], t[1], t[2], t[3]]] | phi in Phi];
+JPhi := subst(JPhi, pt);
+indent(JPhi);
+rk(matrix(JPhi));
