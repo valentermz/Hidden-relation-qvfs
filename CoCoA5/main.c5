@@ -10,17 +10,17 @@
 -- For technical reasons, we need to list all symbols here.
 
 use R ::= QQ[d[1..4], t[1..4], p[1..6], q[1..6], L, x, y, z, w];
+F := NewFractionField(R);
+_ := CanonicalHom(R, F);
 
 define assert(test)
   If not(test) Then Error("Assertion failed") EndIf;
 enddefine;
 
 define at_infty(P)
-  TopLevel x, y, z, w, R;
-  F := NewFractionField(R);
-  phi := CanonicalHom(R, F);
-  res := subst(phi(P), [[phi(x), 1 / phi(z)], [phi(y), phi(w) / phi(z)]]);
-  res := subst(res * phi(z^2), [[phi(z), 0]]);
+  TopLevel x, y, z, w, R, F, _;
+  res := subst(_(P), [[_(x), 1 / _(z)], [_(y), _(w) / _(z)]]);
+  res := subst(res * _(z^2), [[_(z), 0]]);
   return num(res) / den(res);
 enddefine;
 
